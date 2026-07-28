@@ -1,19 +1,15 @@
-import "dotenv/config";
-import { createClient } from "@libsql/client";
+import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const localDbPath = path.join(__dirname, "..", "data.sqlite");
+const dbPath = path.join(__dirname, "..", "data.sqlite");
 
-const url = process.env.TURSO_DATABASE_URL ?? `file:${localDbPath}`;
-const authToken = process.env.TURSO_AUTH_TOKEN;
+export const db = new DatabaseSync(dbPath);
+db.exec("PRAGMA journal_mode = WAL");
+db.exec("PRAGMA foreign_keys = ON");
 
-export const db = createClient(authToken ? { url, authToken } : { url });
-
-await db.execute("PRAGMA foreign_keys = ON");
-
-await db.executeMultiple(`
+db.exec(`
   CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
