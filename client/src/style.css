@@ -1,0 +1,282 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  background: #f4f5f7;
+  color: #172b4d;
+}
+
+/* --- Name gate --- */
+
+.name-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.name-gate-form {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  min-width: 320px;
+}
+
+.name-gate-form input {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 1rem;
+  margin: 1rem 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* --- Board layout --- */
+
+.board-page {
+  padding: 1.5rem;
+}
+
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.board-header h1 {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.board-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.current-user {
+  color: #5e6c84;
+  font-size: 0.9rem;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #0052cc;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.column {
+  background: #ebecf0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  min-height: 60vh;
+  transition: background 0.15s;
+}
+
+.column-over {
+  background: #dfe1e6;
+}
+
+.column h2 {
+  font-size: 0.95rem;
+  margin: 0.25rem 0.5rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.column-count {
+  color: #6b778c;
+  font-weight: normal;
+}
+
+.column-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* --- Task card --- */
+
+.task-card {
+  background: white;
+  border-radius: 6px;
+  padding: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  cursor: grab;
+  touch-action: none;
+}
+
+.task-card.dragging {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  opacity: 0.9;
+}
+
+.task-card-title {
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+}
+
+.task-card-assignee {
+  font-size: 0.8rem;
+  color: #5e6c84;
+}
+
+/* --- New task --- */
+
+.new-task-button {
+  background: #0052cc;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.new-task-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.new-task-form input {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* --- Modal --- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 30, 66, 0.54);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  border: none;
+  background: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.modal label {
+  display: block;
+  font-size: 0.85rem;
+  color: #5e6c84;
+  margin: 0.75rem 0;
+}
+
+.modal input,
+.modal textarea {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.modal-actions button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #0052cc;
+  color: white;
+}
+
+.modal-actions .danger {
+  background: #de350b;
+}
+
+.comments {
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0.75rem 0;
+}
+
+.comment {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.9rem;
+}
+
+.comment-text {
+  color: #172b4d;
+}
+
+.empty {
+  color: #6b778c;
+  font-size: 0.85rem;
+}
+
+.comment-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.comment-form input {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.comment-form button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  background: #0052cc;
+  color: white;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .board {
+    grid-template-columns: 1fr;
+  }
+}
