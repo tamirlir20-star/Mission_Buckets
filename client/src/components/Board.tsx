@@ -50,6 +50,10 @@ export function Board({ username, onSwitchUser }: { username: string; onSwitchUs
 
   const tasksById = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks]);
   const visibleTasks = filter === "all" ? tasks : tasks.filter((t) => t.type === filter);
+  const knownAssignees = useMemo(
+    () => Array.from(new Set(tasks.map((t) => t.assignee).filter(Boolean))).sort(),
+    [tasks]
+  );
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -132,6 +136,7 @@ export function Board({ username, onSwitchUser }: { username: string; onSwitchUs
                   tasks={visibleTasks.filter((t) => t.status === status)}
                   tasksById={tasksById}
                   username={username}
+                  knownAssignees={knownAssignees}
                   onOpenTask={setSelectedTask}
                   onDeleted={handleTaskDeleted}
                   onUpdated={handleTaskUpdated}

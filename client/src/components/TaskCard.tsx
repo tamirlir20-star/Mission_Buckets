@@ -1,5 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
+import { useState } from "react";
 import { api } from "../api";
+import { formatDate } from "../formatDate";
 import { TYPE_BADGE_CLASS, TYPE_LABELS } from "../taskTypes";
 import type { Task } from "../types";
 
@@ -8,6 +10,7 @@ export function TaskCard({
   parent,
   columnTasks,
   username,
+  knownAssignees,
   nested = false,
   onOpen,
   onDeleted,
@@ -17,6 +20,7 @@ export function TaskCard({
   parent: Task | undefined;
   columnTasks: Task[];
   username: string;
+  knownAssignees: string[];
   nested?: boolean;
   onOpen: (task: Task) => void;
   onDeleted: (taskId: number) => void;
@@ -25,6 +29,7 @@ export function TaskCard({
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
   });
+  const [editingAssignee, setEditingAssignee] = useState(false);
 
   const style = transform
     ? {
@@ -34,7 +39,7 @@ export function TaskCard({
     : undefined;
 
   const childrenInColumn = columnTasks.filter((t) => t.parent_id === task.id);
-  const isMine = task.assignee === username;
+  const otherAssignees = knownAssignees.filter((a) => a !== username);
 
   async function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
@@ -50,10 +55,10 @@ export function TaskCard({
     onUpdated(updated);
   }
 
-  async function handleToggleAssignToMe(e: React.MouseEvent) {
-    e.stopPropagation();
-    const updated = await api.updateTask(task.id, { assignee: isMine ? "" : username });
+  async function handleAssigneeChange(value: string) {
+    const updated = await api.updateTask(task.id, { assignee: value });
     onUpdated(updated);
+    setEditingAssignee(false);
   }
 
   return (
@@ -75,14 +80,6 @@ export function TaskCard({
       <div className="task-card-top">
         <span className={`badge ${TYPE_BADGE_CLASS[task.type]}`}>{TYPE_LABELS[task.type]}</span>
         <div className="task-card-buttons">
-          <button
-            className="task-card-assign"
-            onClick={handleToggleAssignToMe}
-            onPointerDown={(e) => e.stopPropagation()}
-            title={isMine ? "הסר שיוך ממני" : "הקצה לעצמי"}
-          >
-            {isMine ? "✋" : "🙋"}
-          </button>
           <button
             className="task-card-complete"
             onClick={handleToggleComplete}
@@ -108,9 +105,41 @@ export function TaskCard({
           {parent.title}
         </div>
       )}
-      <div className={`task-card-assignee${task.assignee ? "" : " unassigned"}`}>
-        👤 {task.assignee || "לא משויך"}
-      </div>
+
+      {editingAssignee ? (
+        <select
+          autoFocus
+          className="task-card-assignee-select"
+          value={task.assignee}
+          onChange={(e) => handleAssigneeChange(e.target.value)}
+          onBlur={() => setEditingAssignee(false)}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <option value="">לא משויך</option>
+          <option value={username}>🙋 {username} (אני)</option>
+          {otherAssignees.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <div
+          className={`task-card-assignee${task.assignee ? "" : " unassigned"}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditingAssignee(true);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          👤 {task.assignee || "לא משויך"} <span className="assignee-edit-hint">✎</span>
+        </div>
+      )}
+
+      {task.completed_at && (
+        <div className="task-card-completed-date">✅ הושלם ב-{formatDate(task.completed_at)}</div>
+      )}
 
       {childrenInColumn.length > 0 && (
         <div className="nested-children">
@@ -121,6 +150,7 @@ export function TaskCard({
               parent={undefined}
               columnTasks={columnTasks}
               username={username}
+              knownAssignees={knownAssignees}
               nested
               onOpen={onOpen}
               onDeleted={onDeleted}

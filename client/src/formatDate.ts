@@ -5,3 +5,8 @@ export function formatDateTime(value: string): string {
   const iso = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
   return new Date(iso).toLocaleString("he-IL", { dateStyle: "medium", timeStyle: "short" });
 }
+
+export function formatDate(value: string): string {
+  const iso = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
+  return new Date(iso).toLocaleDateString("he-IL", { dateStyle: "short" });
+}
