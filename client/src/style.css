@@ -327,6 +327,34 @@ body {
   opacity: 0.95;
 }
 
+.task-card-nested {
+  padding: 0.6rem 0.7rem;
+  box-shadow: none;
+  background: #fafaff;
+  border-color: #ecebfb;
+  border-inline-start: 3px solid var(--primary-light);
+}
+
+.task-card-nested .task-card-title {
+  font-size: 0.83rem;
+  margin: 0.3rem 0;
+}
+
+.task-card-nested .badge {
+  font-size: 0.62rem;
+  padding: 0.14rem 0.5rem;
+}
+
+.nested-children {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.55rem 0 0.15rem;
+  margin-inline-start: 0.6rem;
+  padding-inline-start: 0.5rem;
+  border-inline-start: 2px dashed #ddd9f7;
+}
+
 .task-card-top {
   display: flex;
   align-items: center;
@@ -334,7 +362,12 @@ body {
   gap: 0.4rem;
 }
 
-.task-card-delete {
+.task-card-buttons {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.task-card-buttons button {
   background: none;
   border: none;
   cursor: pointer;
@@ -345,8 +378,13 @@ body {
   transition: opacity 0.12s, background 0.12s;
 }
 
-.task-card:hover .task-card-delete {
+.task-card:hover .task-card-buttons button {
   opacity: 0.55;
+}
+
+.task-card-complete:hover {
+  opacity: 1 !important;
+  background: #dcfce7;
 }
 
 .task-card-delete:hover {

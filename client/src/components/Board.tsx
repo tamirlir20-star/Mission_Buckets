@@ -133,6 +133,7 @@ export function Board({ username, onSwitchUser }: { username: string; onSwitchUs
                   tasksById={tasksById}
                   onOpenTask={setSelectedTask}
                   onDeleted={handleTaskDeleted}
+                  onUpdated={handleTaskUpdated}
                 />
               ))}
             </div>
