@@ -131,6 +131,7 @@ export function Board({ username, onSwitchUser }: { username: string; onSwitchUs
                   status={status}
                   tasks={visibleTasks.filter((t) => t.status === status)}
                   tasksById={tasksById}
+                  username={username}
                   onOpenTask={setSelectedTask}
                   onDeleted={handleTaskDeleted}
                   onUpdated={handleTaskUpdated}

@@ -392,6 +392,11 @@ body {
   background: #fee2e2;
 }
 
+.task-card-assign:hover {
+  opacity: 1 !important;
+  background: #fef3c7;
+}
+
 .task-card-title {
   font-size: 0.92rem;
   font-weight: 600;
@@ -421,6 +426,12 @@ body {
 .task-card-assignee {
   font-size: 0.8rem;
   color: var(--text-muted);
+  margin-top: 0.3rem;
+}
+
+.task-card-assignee.unassigned {
+  opacity: 0.55;
+  font-style: italic;
 }
 
 /* --- Type badges --- */
@@ -570,6 +581,40 @@ body {
   color: var(--text);
   outline: none;
   transition: border-color 0.15s;
+}
+
+.assignee-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.assignee-row input {
+  flex: 1;
+}
+
+.assign-me-button {
+  margin-top: 0.35rem;
+  white-space: nowrap;
+  padding: 0.55rem 0.8rem;
+  border-radius: 9px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.assign-me-button:hover {
+  border-color: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.assign-me-button.active {
+  background: #fef3c7;
+  border-color: #fbbf24;
+  color: #78350f;
 }
 
 .modal input:focus,

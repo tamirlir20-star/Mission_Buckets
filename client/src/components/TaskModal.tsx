@@ -64,6 +64,10 @@ export function TaskModal({
   const blockedParentIds = useMemo(() => descendantIds(task.id, tasks), [task.id, tasks]);
   const eligibleParents = tasks.filter((t) => t.id !== task.id && !blockedParentIds.has(t.id));
   const children = tasks.filter((t) => t.parent_id === task.id);
+  const knownAssignees = useMemo(
+    () => Array.from(new Set(tasks.map((t) => t.assignee).filter(Boolean))).sort(),
+    [tasks]
+  );
 
   async function handleSave() {
     setSaving(true);
@@ -183,11 +187,26 @@ export function TaskModal({
 
         <label>
           שיוך ל
-          <input
-            value={assignee}
-            onChange={(e) => setAssignee(e.target.value)}
-            placeholder="שם החבר..."
-          />
+          <div className="assignee-row">
+            <input
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              placeholder="שם החבר..."
+              list="known-assignees"
+            />
+            <button
+              type="button"
+              className={`assign-me-button${assignee === username ? " active" : ""}`}
+              onClick={() => setAssignee(assignee === username ? "" : username)}
+            >
+              {assignee === username ? "✋ הסר שיוך" : "🙋 הקצה לעצמי"}
+            </button>
+          </div>
+          <datalist id="known-assignees">
+            {knownAssignees.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
         </label>
 
         <div className="modal-actions">

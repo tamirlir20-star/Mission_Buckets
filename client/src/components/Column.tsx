@@ -12,6 +12,7 @@ export function Column({
   status,
   tasks,
   tasksById,
+  username,
   onOpenTask,
   onDeleted,
   onUpdated,
@@ -19,6 +20,7 @@ export function Column({
   status: TaskStatus;
   tasks: Task[];
   tasksById: Map<number, Task>;
+  username: string;
   onOpenTask: (task: Task) => void;
   onDeleted: (taskId: number) => void;
   onUpdated: (task: Task) => void;
@@ -42,6 +44,7 @@ export function Column({
             task={task}
             parent={task.parent_id ? tasksById.get(task.parent_id) : undefined}
             columnTasks={tasks}
+            username={username}
             onOpen={onOpenTask}
             onDeleted={onDeleted}
             onUpdated={onUpdated}

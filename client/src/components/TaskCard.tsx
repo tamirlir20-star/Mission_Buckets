@@ -7,6 +7,7 @@ export function TaskCard({
   task,
   parent,
   columnTasks,
+  username,
   nested = false,
   onOpen,
   onDeleted,
@@ -15,6 +16,7 @@ export function TaskCard({
   task: Task;
   parent: Task | undefined;
   columnTasks: Task[];
+  username: string;
   nested?: boolean;
   onOpen: (task: Task) => void;
   onDeleted: (taskId: number) => void;
@@ -32,6 +34,7 @@ export function TaskCard({
     : undefined;
 
   const childrenInColumn = columnTasks.filter((t) => t.parent_id === task.id);
+  const isMine = task.assignee === username;
 
   async function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
@@ -44,6 +47,12 @@ export function TaskCard({
     e.stopPropagation();
     const nextStatus = task.status === "done" ? "todo" : "done";
     const updated = await api.updateTask(task.id, { status: nextStatus });
+    onUpdated(updated);
+  }
+
+  async function handleToggleAssignToMe(e: React.MouseEvent) {
+    e.stopPropagation();
+    const updated = await api.updateTask(task.id, { assignee: isMine ? "" : username });
     onUpdated(updated);
   }
 
@@ -66,6 +75,14 @@ export function TaskCard({
       <div className="task-card-top">
         <span className={`badge ${TYPE_BADGE_CLASS[task.type]}`}>{TYPE_LABELS[task.type]}</span>
         <div className="task-card-buttons">
+          <button
+            className="task-card-assign"
+            onClick={handleToggleAssignToMe}
+            onPointerDown={(e) => e.stopPropagation()}
+            title={isMine ? "הסר שיוך ממני" : "הקצה לעצמי"}
+          >
+            {isMine ? "✋" : "🙋"}
+          </button>
           <button
             className="task-card-complete"
             onClick={handleToggleComplete}
@@ -91,7 +108,9 @@ export function TaskCard({
           {parent.title}
         </div>
       )}
-      {task.assignee && <div className="task-card-assignee">👤 {task.assignee}</div>}
+      <div className={`task-card-assignee${task.assignee ? "" : " unassigned"}`}>
+        👤 {task.assignee || "לא משויך"}
+      </div>
 
       {childrenInColumn.length > 0 && (
         <div className="nested-children">
@@ -101,6 +120,7 @@ export function TaskCard({
               task={child}
               parent={undefined}
               columnTasks={columnTasks}
+              username={username}
               nested
               onOpen={onOpen}
               onDeleted={onDeleted}
