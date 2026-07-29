@@ -428,6 +428,66 @@ body {
   color: var(--primary);
 }
 
+.task-card-description {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0.15rem 0.3rem;
+  margin: 0.1rem -0.3rem 0.2rem;
+  white-space: pre-wrap;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.task-card-description:hover {
+  background: #f3f1ff;
+  color: var(--primary-dark);
+}
+
+.task-card-description.unassigned {
+  opacity: 0.5;
+  font-style: italic;
+}
+
+.card-description-form {
+  margin: 0.2rem 0;
+}
+
+.card-description-form textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--primary-light);
+  resize: vertical;
+}
+
+.card-description-form-buttons {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.3rem;
+}
+
+.card-description-form-buttons button {
+  font-size: 0.78rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+  color: white;
+}
+
+.card-description-form-buttons button.secondary {
+  background: var(--border);
+  color: var(--text-muted);
+}
+
 .task-card-assignee {
   font-size: 0.8rem;
   color: var(--text-muted);

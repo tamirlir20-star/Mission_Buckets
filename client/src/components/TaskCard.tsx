@@ -34,6 +34,8 @@ export function TaskCard({
   const [editingAssignee, setEditingAssignee] = useState(false);
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [subtaskTitle, setSubtaskTitle] = useState("");
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [descriptionDraft, setDescriptionDraft] = useState(task.description);
 
   const style = transform
     ? {
@@ -72,15 +74,23 @@ export function TaskCard({
     setEditingAssignee(false);
   }
 
+  async function handleSaveDescription(e: React.FormEvent) {
+    e.preventDefault();
+    const updated = await api.updateTask(task.id, { description: descriptionDraft });
+    onUpdated(updated);
+    setEditingDescription(false);
+  }
+
   async function handleAddSubtask(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = subtaskTitle.trim();
     if (!trimmed) return;
-    // Inherit this card's status so the new sub-task nests visually right away.
+    // Inherit this card's type and status so the new sub-task nests visually right
+    // away and doesn't disappear from view if a type filter tab is active.
     const child = await api.createTask({
       title: trimmed,
       createdBy: username,
-      type: "task",
+      type: task.type,
       parentId: task.id,
       status: task.status,
     });
@@ -150,6 +160,53 @@ export function TaskCard({
         <div className="parent-chip">
           <span className="parent-chip-icon">↳</span>
           {parent.title}
+        </div>
+      )}
+
+      {editingDescription ? (
+        <form
+          className="card-description-form"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onSubmit={handleSaveDescription}
+        >
+          <textarea
+            autoFocus
+            rows={2}
+            value={descriptionDraft}
+            onChange={(e) => setDescriptionDraft(e.target.value)}
+            placeholder="הוסף מלל..."
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setDescriptionDraft(task.description);
+                setEditingDescription(false);
+              }
+            }}
+          />
+          <div className="card-description-form-buttons">
+            <button type="submit">שמור</button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                setDescriptionDraft(task.description);
+                setEditingDescription(false);
+              }}
+            >
+              ביטול
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div
+          className={`task-card-description${task.description ? "" : " unassigned"}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditingDescription(true);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          {task.description || "+ הוסף מלל..."}
         </div>
       )}
 
