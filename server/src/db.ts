@@ -24,7 +24,8 @@ await db.executeMultiple(`
     assignee TEXT NOT NULL DEFAULT '',
     created_by TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    completed_at TEXT
   );
 
   CREATE TABLE IF NOT EXISTS comments (
@@ -50,6 +51,12 @@ if (!existingColumns.has("parent_id")) {
   await db.execute(
     "ALTER TABLE tasks ADD COLUMN parent_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL"
   );
+}
+if (!existingColumns.has("completed_at")) {
+  await db.execute("ALTER TABLE tasks ADD COLUMN completed_at TEXT");
+  // Backfill: anything already sitting in 'done' predates this column, so we can't know
+  // the real completion time — use updated_at as the best available approximation.
+  await db.execute("UPDATE tasks SET completed_at = updated_at WHERE status = 'done'");
 }
 
 await db.execute("CREATE INDEX IF NOT EXISTS idx_tasks_parent_id ON tasks(parent_id)");

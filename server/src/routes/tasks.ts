@@ -17,6 +17,7 @@ interface TaskRow {
   created_by: string;
   created_at: string;
   updated_at: string;
+  completed_at: string | null;
 }
 
 type Handler = (req: Request, res: Response) => Promise<void>;
@@ -155,8 +156,17 @@ tasksRouter.patch(
       parentId: nextParentId,
     };
 
+    // Track completion time based on the status transition, not just the current value,
+    // so re-saving an already-done card doesn't stomp its original completion timestamp.
+    let completedAtSql = "completed_at";
+    if (next.status === "done" && existing.status !== "done") {
+      completedAtSql = "datetime('now')";
+    } else if (next.status !== "done" && existing.status === "done") {
+      completedAtSql = "NULL";
+    }
+
     await db.execute({
-      sql: "UPDATE tasks SET title = ?, description = ?, status = ?, assignee = ?, type = ?, parent_id = ?, updated_at = datetime('now') WHERE id = ?",
+      sql: `UPDATE tasks SET title = ?, description = ?, status = ?, assignee = ?, type = ?, parent_id = ?, completed_at = ${completedAtSql}, updated_at = datetime('now') WHERE id = ?`,
       args: [next.title, next.description, next.status, next.assignee, next.type, next.parentId, id],
     });
 

@@ -13,11 +13,13 @@ export function Column({
   tasks,
   tasksById,
   onOpenTask,
+  onDeleted,
 }: {
   status: TaskStatus;
   tasks: Task[];
   tasksById: Map<number, Task>;
   onOpenTask: (task: Task) => void;
+  onDeleted: (taskId: number) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
@@ -33,6 +35,7 @@ export function Column({
             task={task}
             parent={task.parent_id ? tasksById.get(task.parent_id) : undefined}
             onOpen={onOpenTask}
+            onDeleted={onDeleted}
           />
         ))}
       </div>

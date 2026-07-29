@@ -179,6 +179,73 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
+.view-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.view-tab {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-muted);
+  padding: 0.4rem 0.2rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.view-tab.active {
+  color: var(--primary-dark);
+  border-bottom-color: var(--primary);
+}
+
+/* --- Completed history --- */
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.history-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.history-row:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.history-title {
+  font-weight: 600;
+  flex: 1;
+}
+
+.history-assignee {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.history-date {
+  color: var(--primary-dark);
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: #f0efff;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -258,6 +325,33 @@ body {
 .task-card.dragging {
   box-shadow: var(--shadow-lg);
   opacity: 0.95;
+}
+
+.task-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.task-card-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0;
+  padding: 0.1rem 0.3rem;
+  border-radius: 6px;
+  transition: opacity 0.12s, background 0.12s;
+}
+
+.task-card:hover .task-card-delete {
+  opacity: 0.55;
+}
+
+.task-card-delete:hover {
+  opacity: 1 !important;
+  background: #fee2e2;
 }
 
 .task-card-title {

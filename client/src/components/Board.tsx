@@ -4,6 +4,7 @@ import { api } from "../api";
 import { TYPE_LABELS } from "../taskTypes";
 import type { Task, TaskStatus, TaskType } from "../types";
 import { Column } from "./Column";
+import { CompletedHistory } from "./CompletedHistory";
 import { NewTaskForm } from "./NewTaskForm";
 import { TaskModal } from "./TaskModal";
 
@@ -11,10 +12,13 @@ const STATUSES: TaskStatus[] = ["todo", "in_progress", "done"];
 const FILTERS: (TaskType | "all")[] = ["all", "top_goal", "milestone", "task"];
 const POLL_INTERVAL_MS = 4000;
 
+type View = "board" | "history";
+
 export function Board({ username, onSwitchUser }: { username: string; onSwitchUser: () => void }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [filter, setFilter] = useState<TaskType | "all">("all");
+  const [view, setView] = useState<View>("board");
   const isModalOpen = useRef(false);
 
   useEffect(() => {
@@ -58,7 +62,8 @@ export function Board({ username, onSwitchUser }: { username: string; onSwitchUs
     setTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
     );
-    await api.updateTask(taskId, { status: newStatus });
+    const updated = await api.updateTask(taskId, { status: newStatus });
+    setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
   }
 
   function handleTaskUpdated(updated: Task) {
@@ -67,6 +72,7 @@ export function Board({ username, onSwitchUser }: { username: string; onSwitchUs
 
   function handleTaskDeleted(taskId: number) {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setSelectedTask((prev) => (prev?.id === taskId ? null : prev));
   }
 
   function handleTaskCreated(task: Task) {
@@ -88,31 +94,53 @@ export function Board({ username, onSwitchUser }: { username: string; onSwitchUs
         </div>
       </header>
 
-      <div className="filter-tabs">
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            className={`filter-tab${filter === f ? " active" : ""}`}
-            onClick={() => setFilter(f)}
-          >
-            {f === "all" ? "הכל" : TYPE_LABELS[f]}
-          </button>
-        ))}
+      <div className="view-tabs">
+        <button
+          className={`view-tab${view === "board" ? " active" : ""}`}
+          onClick={() => setView("board")}
+        >
+          לוח
+        </button>
+        <button
+          className={`view-tab${view === "history" ? " active" : ""}`}
+          onClick={() => setView("history")}
+        >
+          היסטוריית השלמות
+        </button>
       </div>
 
-      <DndContext onDragEnd={handleDragEnd}>
-        <div className="board">
-          {STATUSES.map((status) => (
-            <Column
-              key={status}
-              status={status}
-              tasks={visibleTasks.filter((t) => t.status === status)}
-              tasksById={tasksById}
-              onOpenTask={setSelectedTask}
-            />
-          ))}
-        </div>
-      </DndContext>
+      {view === "board" && (
+        <>
+          <div className="filter-tabs">
+            {FILTERS.map((f) => (
+              <button
+                key={f}
+                className={`filter-tab${filter === f ? " active" : ""}`}
+                onClick={() => setFilter(f)}
+              >
+                {f === "all" ? "הכל" : TYPE_LABELS[f]}
+              </button>
+            ))}
+          </div>
+
+          <DndContext onDragEnd={handleDragEnd}>
+            <div className="board">
+              {STATUSES.map((status) => (
+                <Column
+                  key={status}
+                  status={status}
+                  tasks={visibleTasks.filter((t) => t.status === status)}
+                  tasksById={tasksById}
+                  onOpenTask={setSelectedTask}
+                  onDeleted={handleTaskDeleted}
+                />
+              ))}
+            </div>
+          </DndContext>
+        </>
+      )}
+
+      {view === "history" && <CompletedHistory tasks={tasks} onOpenTask={setSelectedTask} />}
 
       {selectedTask && (
         <TaskModal
