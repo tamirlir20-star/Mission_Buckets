@@ -140,6 +140,7 @@ export function Board({ username, onSwitchUser }: { username: string; onSwitchUs
                   onOpenTask={setSelectedTask}
                   onDeleted={handleTaskDeleted}
                   onUpdated={handleTaskUpdated}
+                  onTaskCreated={handleTaskCreated}
                 />
               ))}
             </div>

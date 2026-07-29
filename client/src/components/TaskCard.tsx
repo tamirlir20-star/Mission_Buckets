@@ -15,6 +15,7 @@ export function TaskCard({
   onOpen,
   onDeleted,
   onUpdated,
+  onTaskCreated,
 }: {
   task: Task;
   parent: Task | undefined;
@@ -25,11 +26,14 @@ export function TaskCard({
   onOpen: (task: Task) => void;
   onDeleted: (taskId: number) => void;
   onUpdated: (task: Task) => void;
+  onTaskCreated: (task: Task) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
   });
   const [editingAssignee, setEditingAssignee] = useState(false);
+  const [addingSubtask, setAddingSubtask] = useState(false);
+  const [subtaskTitle, setSubtaskTitle] = useState("");
 
   const style = transform
     ? {
@@ -40,6 +44,7 @@ export function TaskCard({
 
   const childrenInColumn = columnTasks.filter((t) => t.parent_id === task.id);
   const otherAssignees = knownAssignees.filter((a) => a !== username);
+  const isMine = task.assignee === username;
 
   async function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
@@ -55,10 +60,33 @@ export function TaskCard({
     onUpdated(updated);
   }
 
+  async function handleToggleAssignToMe(e: React.MouseEvent) {
+    e.stopPropagation();
+    const updated = await api.updateTask(task.id, { assignee: isMine ? "" : username });
+    onUpdated(updated);
+  }
+
   async function handleAssigneeChange(value: string) {
     const updated = await api.updateTask(task.id, { assignee: value });
     onUpdated(updated);
     setEditingAssignee(false);
+  }
+
+  async function handleAddSubtask(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = subtaskTitle.trim();
+    if (!trimmed) return;
+    // Inherit this card's status so the new sub-task nests visually right away.
+    const child = await api.createTask({
+      title: trimmed,
+      createdBy: username,
+      type: "task",
+      parentId: task.id,
+      status: task.status,
+    });
+    onTaskCreated(child);
+    setSubtaskTitle("");
+    setAddingSubtask(false);
   }
 
   return (
@@ -80,6 +108,25 @@ export function TaskCard({
       <div className="task-card-top">
         <span className={`badge ${TYPE_BADGE_CLASS[task.type]}`}>{TYPE_LABELS[task.type]}</span>
         <div className="task-card-buttons">
+          <button
+            className="task-card-add-subtask"
+            onClick={(e) => {
+              e.stopPropagation();
+              setAddingSubtask((v) => !v);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            title="הוסף תת-משימה"
+          >
+            ➕
+          </button>
+          <button
+            className="task-card-assign"
+            onClick={handleToggleAssignToMe}
+            onPointerDown={(e) => e.stopPropagation()}
+            title={isMine ? "הסר שיוך ממני" : "הקצה לעצמי"}
+          >
+            {isMine ? "✋" : "🙋"}
+          </button>
           <button
             className="task-card-complete"
             onClick={handleToggleComplete}
@@ -141,6 +188,28 @@ export function TaskCard({
         <div className="task-card-completed-date">✅ הושלם ב-{formatDate(task.completed_at)}</div>
       )}
 
+      {addingSubtask && (
+        <form
+          className="card-subtask-form"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onSubmit={handleAddSubtask}
+        >
+          <input
+            autoFocus
+            value={subtaskTitle}
+            onChange={(e) => setSubtaskTitle(e.target.value)}
+            placeholder="שם תת-המשימה..."
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setAddingSubtask(false);
+            }}
+          />
+          <button type="submit" disabled={!subtaskTitle.trim()}>
+            הוסף
+          </button>
+        </form>
+      )}
+
       {childrenInColumn.length > 0 && (
         <div className="nested-children">
           {childrenInColumn.map((child) => (
@@ -155,6 +224,7 @@ export function TaskCard({
               onOpen={onOpen}
               onDeleted={onDeleted}
               onUpdated={onUpdated}
+              onTaskCreated={onTaskCreated}
             />
           ))}
         </div>
