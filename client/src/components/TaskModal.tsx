@@ -23,6 +23,8 @@ function descendantIds(rootId: number, tasks: Task[]): Set<number> {
   return result;
 }
 
+type QuickAddMode = "child" | "parent" | null;
+
 export function TaskModal({
   task,
   username,
@@ -31,6 +33,7 @@ export function TaskModal({
   onUpdated,
   onDeleted,
   onOpenTask,
+  onTaskCreated,
 }: {
   task: Task;
   username: string;
@@ -39,6 +42,7 @@ export function TaskModal({
   onUpdated: (task: Task) => void;
   onDeleted: (taskId: number) => void;
   onOpenTask: (task: Task) => void;
+  onTaskCreated: (task: Task) => void;
 }) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
@@ -48,6 +52,10 @@ export function TaskModal({
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [quickAddMode, setQuickAddMode] = useState<QuickAddMode>(null);
+  const [quickTitle, setQuickTitle] = useState("");
+  const [quickType, setQuickType] = useState<TaskType>("task");
 
   useEffect(() => {
     api.getComments(task.id).then(setComments).catch(() => {});
@@ -88,6 +96,42 @@ export function TaskModal({
     const comment = await api.addComment(task.id, { author: username, text });
     setComments((prev) => [...prev, comment]);
     setNewComment("");
+  }
+
+  function openQuickAdd(mode: QuickAddMode) {
+    setQuickAddMode(mode);
+    setQuickTitle("");
+    setQuickType("task");
+  }
+
+  async function handleQuickAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = quickTitle.trim();
+    if (!trimmed) return;
+
+    if (quickAddMode === "child") {
+      const child = await api.createTask({
+        title: trimmed,
+        createdBy: username,
+        type: quickType,
+        parentId: task.id,
+      });
+      onTaskCreated(child);
+    } else if (quickAddMode === "parent") {
+      const newParent = await api.createTask({
+        title: trimmed,
+        createdBy: username,
+        type: quickType,
+        parentId: task.parent_id,
+      });
+      onTaskCreated(newParent);
+      const updatedTask = await api.updateTask(task.id, { parentId: newParent.id });
+      onUpdated(updatedTask);
+      setParentId(newParent.id);
+    }
+
+    setQuickAddMode(null);
+    setQuickTitle("");
   }
 
   return (
@@ -154,6 +198,39 @@ export function TaskModal({
             מחק
           </button>
         </div>
+
+        <div className="quick-add-row">
+          <button type="button" className="quick-add-button" onClick={() => openQuickAdd("child")}>
+            + תת-משימה מתחת
+          </button>
+          <button type="button" className="quick-add-button" onClick={() => openQuickAdd("parent")}>
+            + כרטיס-על חדש מעל
+          </button>
+        </div>
+
+        {quickAddMode && (
+          <form className="quick-add-form" onSubmit={handleQuickAdd}>
+            <select value={quickType} onChange={(e) => setQuickType(e.target.value as TaskType)}>
+              {TASK_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {TYPE_LABELS[t]}
+                </option>
+              ))}
+            </select>
+            <input
+              autoFocus
+              value={quickTitle}
+              onChange={(e) => setQuickTitle(e.target.value)}
+              placeholder="שם..."
+            />
+            <button type="submit" disabled={!quickTitle.trim()}>
+              צור
+            </button>
+            <button type="button" className="secondary" onClick={() => setQuickAddMode(null)}>
+              ביטול
+            </button>
+          </form>
+        )}
 
         {children.length > 0 && (
           <>

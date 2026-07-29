@@ -33,7 +33,12 @@ export function TaskCard({
     >
       <span className={`badge ${TYPE_BADGE_CLASS[task.type]}`}>{TYPE_LABELS[task.type]}</span>
       <div className="task-card-title">{task.title}</div>
-      {parent && <div className="task-card-parent">↳ {parent.title}</div>}
+      {parent && (
+        <div className="parent-chip">
+          <span className="parent-chip-icon">↳</span>
+          {parent.title}
+        </div>
+      )}
       {task.assignee && <div className="task-card-assignee">👤 {task.assignee}</div>}
     </div>
   );

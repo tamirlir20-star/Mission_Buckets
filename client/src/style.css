@@ -267,10 +267,23 @@ body {
   color: var(--text);
 }
 
-.task-card-parent {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  margin-bottom: 0.3rem;
+.parent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--primary-dark);
+  background: #eef0ff;
+  border: 1px solid #e0e3ff;
+  padding: 0.15rem 0.6rem 0.15rem 0.5rem;
+  border-radius: 999px;
+  margin-bottom: 0.4rem;
+  max-width: 100%;
+}
+
+.parent-chip-icon {
+  font-size: 0.85rem;
+  color: var(--primary);
 }
 
 .task-card-assignee {
@@ -431,6 +444,68 @@ body {
 .modal textarea:focus,
 .modal select:focus {
   border-color: var(--primary);
+}
+
+.quick-add-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.quick-add-button {
+  background: #f3f1ff;
+  color: var(--primary-dark);
+  border: 1.5px dashed #c9c3f5;
+  padding: 0.4rem 0.8rem;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.quick-add-button:hover {
+  background: #eae6ff;
+}
+
+.quick-add-form {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 0.6rem;
+  padding: 0.6rem;
+  background: #f8f7ff;
+  border-radius: 10px;
+}
+
+.quick-add-form input,
+.quick-add-form select {
+  width: auto;
+  margin-top: 0;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.88rem;
+}
+
+.quick-add-form input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.quick-add-form button {
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+  color: white;
+}
+
+.quick-add-form button.secondary {
+  background: var(--border);
+  color: var(--text-muted);
 }
 
 .children-list {

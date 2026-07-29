@@ -76,7 +76,7 @@ export function Board({ username, onSwitchUser }: { username: string; onSwitchUs
   return (
     <div className="board-page">
       <header className="board-header">
-        <h1>לוח משימות - פרויקט המשחק</h1>
+        <h1>ממשק ניהול משימות</h1>
         <div className="board-header-right">
           <NewTaskForm username={username} tasks={tasks} onCreated={handleTaskCreated} />
           <span className="current-user">
@@ -123,6 +123,7 @@ export function Board({ username, onSwitchUser }: { username: string; onSwitchUs
           onUpdated={handleTaskUpdated}
           onDeleted={handleTaskDeleted}
           onOpenTask={setSelectedTask}
+          onTaskCreated={handleTaskCreated}
         />
       )}
     </div>

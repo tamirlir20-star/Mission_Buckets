@@ -12,7 +12,7 @@ export function NameGate({ onSubmit }: { onSubmit: (name: string) => void }) {
   return (
     <div className="name-gate">
       <form onSubmit={handleSubmit} className="name-gate-form">
-        <h1>לוח משימות - פרויקט המשחק</h1>
+        <h1>ממשק ניהול משימות</h1>
         <p>מה השם שלך?</p>
         <input
           autoFocus
