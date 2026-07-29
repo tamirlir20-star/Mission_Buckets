@@ -1,4 +1,4 @@
-import type { Comment, Task, TaskStatus } from "./types";
+import type { Comment, Task, TaskStatus, TaskType } from "./types";
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -16,12 +16,25 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 export const api = {
   getTasks: () => request<Task[]>("/api/tasks"),
 
-  createTask: (data: { title: string; description?: string; assignee?: string; createdBy: string }) =>
-    request<Task>("/api/tasks", { method: "POST", body: JSON.stringify(data) }),
+  createTask: (data: {
+    title: string;
+    description?: string;
+    assignee?: string;
+    createdBy: string;
+    type?: TaskType;
+    parentId?: number | null;
+  }) => request<Task>("/api/tasks", { method: "POST", body: JSON.stringify(data) }),
 
   updateTask: (
     id: number,
-    data: Partial<{ title: string; description: string; status: TaskStatus; assignee: string }>
+    data: Partial<{
+      title: string;
+      description: string;
+      status: TaskStatus;
+      assignee: string;
+      type: TaskType;
+      parentId: number | null;
+    }>
   ) => request<Task>(`/api/tasks/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
 
   deleteTask: (id: number) => request<void>(`/api/tasks/${id}`, { method: "DELETE" }),

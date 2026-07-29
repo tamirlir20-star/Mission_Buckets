@@ -11,10 +11,12 @@ const TITLES: Record<TaskStatus, string> = {
 export function Column({
   status,
   tasks,
+  tasksById,
   onOpenTask,
 }: {
   status: TaskStatus;
   tasks: Task[];
+  tasksById: Map<number, Task>;
   onOpenTask: (task: Task) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
@@ -26,7 +28,12 @@ export function Column({
       </h2>
       <div className="column-tasks">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} onOpen={onOpenTask} />
+          <TaskCard
+            key={task.id}
+            task={task}
+            parent={task.parent_id ? tasksById.get(task.parent_id) : undefined}
+            onOpen={onOpenTask}
+          />
         ))}
       </div>
     </div>

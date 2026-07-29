@@ -19,6 +19,8 @@ await db.executeMultiple(`
     title TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT 'todo' CHECK (status IN ('todo', 'in_progress', 'done')),
+    type TEXT NOT NULL DEFAULT 'task' CHECK (type IN ('top_goal', 'milestone', 'task')),
+    parent_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
     assignee TEXT NOT NULL DEFAULT '',
     created_by TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -35,3 +37,19 @@ await db.executeMultiple(`
 
   CREATE INDEX IF NOT EXISTS idx_comments_task_id ON comments(task_id);
 `);
+
+// Migration for databases created before `type`/`parent_id` existed (local files and the
+// already-deployed Turso database both predate this schema). Must run before the
+// parent_id index below, since that column may not exist yet on older databases.
+const tableInfo = await db.execute("PRAGMA table_info(tasks)");
+const existingColumns = new Set(tableInfo.rows.map((row) => row.name as string));
+if (!existingColumns.has("type")) {
+  await db.execute("ALTER TABLE tasks ADD COLUMN type TEXT NOT NULL DEFAULT 'task'");
+}
+if (!existingColumns.has("parent_id")) {
+  await db.execute(
+    "ALTER TABLE tasks ADD COLUMN parent_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL"
+  );
+}
+
+await db.execute("CREATE INDEX IF NOT EXISTS idx_tasks_parent_id ON tasks(parent_id)");

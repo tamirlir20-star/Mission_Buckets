@@ -1,7 +1,16 @@
 import { useDraggable } from "@dnd-kit/core";
+import { TYPE_BADGE_CLASS, TYPE_LABELS } from "../taskTypes";
 import type { Task } from "../types";
 
-export function TaskCard({ task, onOpen }: { task: Task; onOpen: (task: Task) => void }) {
+export function TaskCard({
+  task,
+  parent,
+  onOpen,
+}: {
+  task: Task;
+  parent: Task | undefined;
+  onOpen: (task: Task) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
   });
@@ -22,7 +31,9 @@ export function TaskCard({ task, onOpen }: { task: Task; onOpen: (task: Task) =>
       {...listeners}
       {...attributes}
     >
+      <span className={`badge ${TYPE_BADGE_CLASS[task.type]}`}>{TYPE_LABELS[task.type]}</span>
       <div className="task-card-title">{task.title}</div>
+      {parent && <div className="task-card-parent">↳ {parent.title}</div>}
       {task.assignee && <div className="task-card-assignee">👤 {task.assignee}</div>}
     </div>
   );

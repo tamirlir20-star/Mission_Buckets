@@ -4,12 +4,23 @@ import { db } from "../db.js";
 export const tasksRouter = Router();
 
 const VALID_STATUSES = new Set(["todo", "in_progress", "done"]);
+const VALID_TYPES = new Set(["top_goal", "milestone", "task"]);
+
+// A milestone must hang off a top_goal, a task must hang off a milestone, and a top_goal
+// has no parent at all — this is what keeps the hierarchy from ever forming a cycle.
+const REQUIRED_PARENT_TYPE: Record<string, string | null> = {
+  top_goal: null,
+  milestone: "top_goal",
+  task: "milestone",
+};
 
 interface TaskRow {
   id: number;
   title: string;
   description: string;
   status: string;
+  type: string;
+  parent_id: number | null;
   assignee: string;
   created_by: string;
   created_at: string;
@@ -20,6 +31,40 @@ type Handler = (req: Request, res: Response) => Promise<void>;
 const wrap = (handler: Handler) => (req: Request, res: Response, next: NextFunction) => {
   handler(req, res).catch(next);
 };
+
+type ParentResolution = { ok: true; parentId: number | null } | { ok: false; error: string };
+
+async function resolveParent(
+  type: string,
+  parentId: unknown,
+  selfId?: number
+): Promise<ParentResolution> {
+  const requiredParentType = REQUIRED_PARENT_TYPE[type];
+
+  if (requiredParentType === null) {
+    return parentId ? { ok: false, error: "top_goal cannot have a parent" } : { ok: true, parentId: null };
+  }
+
+  if (parentId === null || parentId === undefined || parentId === "") {
+    return { ok: true, parentId: null };
+  }
+
+  const id = Number(parentId);
+  if (!Number.isInteger(id) || id === selfId) {
+    return { ok: false, error: "invalid parent_id" };
+  }
+
+  const parentResult = await db.execute({ sql: "SELECT * FROM tasks WHERE id = ?", args: [id] });
+  const parent = parentResult.rows[0] as unknown as TaskRow | undefined;
+  if (!parent) {
+    return { ok: false, error: "parent not found" };
+  }
+  if (parent.type !== requiredParentType) {
+    return { ok: false, error: `a ${type} must have a ${requiredParentType} parent` };
+  }
+
+  return { ok: true, parentId: id };
+}
 
 tasksRouter.get(
   "/",
@@ -32,15 +77,33 @@ tasksRouter.get(
 tasksRouter.post(
   "/",
   wrap(async (req, res) => {
-    const { title, description = "", assignee = "", createdBy = "" } = req.body ?? {};
+    const {
+      title,
+      description = "",
+      assignee = "",
+      createdBy = "",
+      type = "task",
+      parentId = null,
+    } = req.body ?? {};
+
     if (typeof title !== "string" || !title.trim()) {
       res.status(400).json({ error: "title is required" });
       return;
     }
+    if (typeof type !== "string" || !VALID_TYPES.has(type)) {
+      res.status(400).json({ error: "invalid type" });
+      return;
+    }
+
+    const parentResolution = await resolveParent(type, parentId);
+    if (!parentResolution.ok) {
+      res.status(400).json({ error: parentResolution.error });
+      return;
+    }
 
     const result = await db.execute({
-      sql: "INSERT INTO tasks (title, description, assignee, created_by) VALUES (?, ?, ?, ?)",
-      args: [title.trim(), description, assignee, createdBy],
+      sql: "INSERT INTO tasks (title, description, assignee, created_by, type, parent_id) VALUES (?, ?, ?, ?, ?, ?)",
+      args: [title.trim(), description, assignee, createdBy, type, parentResolution.parentId],
     });
 
     const task = await db.execute({
@@ -62,11 +125,31 @@ tasksRouter.patch(
       return;
     }
 
-    const { title, description, status, assignee } = req.body ?? {};
+    const { title, description, status, assignee, type, parentId } = req.body ?? {};
 
     if (status !== undefined && !VALID_STATUSES.has(status)) {
       res.status(400).json({ error: "invalid status" });
       return;
+    }
+    if (type !== undefined && !VALID_TYPES.has(type)) {
+      res.status(400).json({ error: "invalid type" });
+      return;
+    }
+
+    const nextType = typeof type === "string" ? type : existing.type;
+
+    let nextParentId = existing.parent_id;
+    if (type !== undefined || parentId !== undefined) {
+      const parentResolution = await resolveParent(
+        nextType,
+        parentId !== undefined ? parentId : existing.parent_id,
+        id
+      );
+      if (!parentResolution.ok) {
+        res.status(400).json({ error: parentResolution.error });
+        return;
+      }
+      nextParentId = parentResolution.parentId;
     }
 
     const next = {
@@ -74,11 +157,13 @@ tasksRouter.patch(
       description: typeof description === "string" ? description : existing.description,
       status: typeof status === "string" ? status : existing.status,
       assignee: typeof assignee === "string" ? assignee : existing.assignee,
+      type: nextType,
+      parentId: nextParentId,
     };
 
     await db.execute({
-      sql: "UPDATE tasks SET title = ?, description = ?, status = ?, assignee = ?, updated_at = datetime('now') WHERE id = ?",
-      args: [next.title, next.description, next.status, next.assignee, id],
+      sql: "UPDATE tasks SET title = ?, description = ?, status = ?, assignee = ?, type = ?, parent_id = ?, updated_at = datetime('now') WHERE id = ?",
+      args: [next.title, next.description, next.status, next.assignee, next.type, next.parentId, id],
     });
 
     const task = await db.execute({ sql: "SELECT * FROM tasks WHERE id = ?", args: [id] });
