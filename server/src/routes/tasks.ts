@@ -85,6 +85,7 @@ tasksRouter.post(
       createdBy = "",
       type = "task",
       parentId = null,
+      status = "todo",
     } = req.body ?? {};
 
     if (typeof title !== "string" || !title.trim()) {
@@ -95,6 +96,10 @@ tasksRouter.post(
       res.status(400).json({ error: "invalid type" });
       return;
     }
+    if (typeof status !== "string" || !VALID_STATUSES.has(status)) {
+      res.status(400).json({ error: "invalid status" });
+      return;
+    }
 
     const parentResolution = await resolveParent(parentId);
     if (!parentResolution.ok) {
@@ -103,8 +108,8 @@ tasksRouter.post(
     }
 
     const result = await db.execute({
-      sql: "INSERT INTO tasks (title, description, assignee, created_by, type, parent_id) VALUES (?, ?, ?, ?, ?, ?)",
-      args: [title.trim(), description, assignee, createdBy, type, parentResolution.parentId],
+      sql: "INSERT INTO tasks (title, description, assignee, created_by, type, parent_id, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      args: [title.trim(), description, assignee, createdBy, type, parentResolution.parentId, status],
     });
 
     const task = await db.execute({

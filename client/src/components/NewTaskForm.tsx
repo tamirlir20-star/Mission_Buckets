@@ -28,11 +28,15 @@ export function NewTaskForm({
     e.preventDefault();
     const trimmed = title.trim();
     if (!trimmed) return;
+    // Inherit the chosen parent's column so the new card nests under it immediately,
+    // instead of landing in "todo" and needing to be dragged over manually.
+    const parent = parentId === "" ? undefined : tasks.find((t) => t.id === parentId);
     const task = await api.createTask({
       title: trimmed,
       createdBy: username,
       type,
       parentId: parentId === "" ? null : parentId,
+      status: parent?.status,
     });
     onCreated(task);
     resetAndClose();

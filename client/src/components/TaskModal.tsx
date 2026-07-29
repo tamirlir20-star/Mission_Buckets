@@ -114,11 +114,14 @@ export function TaskModal({
     if (!trimmed) return;
 
     if (quickAddMode === "child") {
+      // Inherit the parent's current column so the new card nests visually right away,
+      // instead of landing in "todo" and needing to be dragged over manually.
       const child = await api.createTask({
         title: trimmed,
         createdBy: username,
         type: quickType,
         parentId: task.id,
+        status: task.status,
       });
       onTaskCreated(child);
     } else if (quickAddMode === "parent") {
@@ -127,6 +130,7 @@ export function TaskModal({
         createdBy: username,
         type: quickType,
         parentId: task.parent_id,
+        status: task.status,
       });
       onTaskCreated(newParent);
       const updatedTask = await api.updateTask(task.id, { parentId: newParent.id });

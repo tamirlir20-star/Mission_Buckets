@@ -23,6 +23,7 @@ export const api = {
     createdBy: string;
     type?: TaskType;
     parentId?: number | null;
+    status?: TaskStatus;
   }) => request<Task>("/api/tasks", { method: "POST", body: JSON.stringify(data) }),
 
   updateTask: (
