@@ -6,14 +6,6 @@ export const tasksRouter = Router();
 const VALID_STATUSES = new Set(["todo", "in_progress", "done"]);
 const VALID_TYPES = new Set(["top_goal", "milestone", "task"]);
 
-// A milestone must hang off a top_goal, a task must hang off a milestone, and a top_goal
-// has no parent at all — this is what keeps the hierarchy from ever forming a cycle.
-const REQUIRED_PARENT_TYPE: Record<string, string | null> = {
-  top_goal: null,
-  milestone: "top_goal",
-  task: "milestone",
-};
-
 interface TaskRow {
   id: number;
   title: string;
@@ -34,17 +26,9 @@ const wrap = (handler: Handler) => (req: Request, res: Response, next: NextFunct
 
 type ParentResolution = { ok: true; parentId: number | null } | { ok: false; error: string };
 
-async function resolveParent(
-  type: string,
-  parentId: unknown,
-  selfId?: number
-): Promise<ParentResolution> {
-  const requiredParentType = REQUIRED_PARENT_TYPE[type];
-
-  if (requiredParentType === null) {
-    return parentId ? { ok: false, error: "top_goal cannot have a parent" } : { ok: true, parentId: null };
-  }
-
+// Any card can be a sub-item of any other card (like nesting cards in Trello) — the only
+// rules are that a card can't be its own parent, and reparenting can't create a cycle.
+async function resolveParent(parentId: unknown, selfId?: number): Promise<ParentResolution> {
   if (parentId === null || parentId === undefined || parentId === "") {
     return { ok: true, parentId: null };
   }
@@ -59,8 +43,24 @@ async function resolveParent(
   if (!parent) {
     return { ok: false, error: "parent not found" };
   }
-  if (parent.type !== requiredParentType) {
-    return { ok: false, error: `a ${type} must have a ${requiredParentType} parent` };
+
+  if (selfId !== undefined) {
+    // Walk up from the proposed parent toward the root; if we hit selfId, this
+    // reparenting would make selfId a descendant of itself.
+    let current: TaskRow | undefined = parent;
+    const visited = new Set<number>();
+    while (current && current.parent_id !== null) {
+      if (current.parent_id === selfId) {
+        return { ok: false, error: "would create a cycle" };
+      }
+      if (visited.has(current.parent_id)) break;
+      visited.add(current.parent_id);
+      const nextResult = await db.execute({
+        sql: "SELECT * FROM tasks WHERE id = ?",
+        args: [current.parent_id],
+      });
+      current = nextResult.rows[0] as unknown as TaskRow | undefined;
+    }
   }
 
   return { ok: true, parentId: id };
@@ -95,7 +95,7 @@ tasksRouter.post(
       return;
     }
 
-    const parentResolution = await resolveParent(type, parentId);
+    const parentResolution = await resolveParent(parentId);
     if (!parentResolution.ok) {
       res.status(400).json({ error: parentResolution.error });
       return;
@@ -136,15 +136,9 @@ tasksRouter.patch(
       return;
     }
 
-    const nextType = typeof type === "string" ? type : existing.type;
-
     let nextParentId = existing.parent_id;
-    if (type !== undefined || parentId !== undefined) {
-      const parentResolution = await resolveParent(
-        nextType,
-        parentId !== undefined ? parentId : existing.parent_id,
-        id
-      );
+    if (parentId !== undefined) {
+      const parentResolution = await resolveParent(parentId, id);
       if (!parentResolution.ok) {
         res.status(400).json({ error: parentResolution.error });
         return;
@@ -157,7 +151,7 @@ tasksRouter.patch(
       description: typeof description === "string" ? description : existing.description,
       status: typeof status === "string" ? status : existing.status,
       assignee: typeof assignee === "string" ? assignee : existing.assignee,
-      type: nextType,
+      type: typeof type === "string" ? type : existing.type,
       parentId: nextParentId,
     };
 

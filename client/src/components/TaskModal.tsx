@@ -1,7 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
-import { REQUIRED_PARENT_TYPE, TASK_TYPES, TYPE_LABELS } from "../taskTypes";
+import { TASK_TYPES, TYPE_LABELS } from "../taskTypes";
 import type { Comment, Task, TaskType } from "../types";
+
+function descendantIds(rootId: number, tasks: Task[]): Set<number> {
+  const childrenByParent = new Map<number, number[]>();
+  for (const t of tasks) {
+    if (t.parent_id === null) continue;
+    const list = childrenByParent.get(t.parent_id) ?? [];
+    list.push(t.id);
+    childrenByParent.set(t.parent_id, list);
+  }
+
+  const result = new Set<number>();
+  const stack = [...(childrenByParent.get(rootId) ?? [])];
+  while (stack.length > 0) {
+    const id = stack.pop()!;
+    if (result.has(id)) continue;
+    result.add(id);
+    stack.push(...(childrenByParent.get(id) ?? []));
+  }
+  return result;
+}
 
 export function TaskModal({
   task,
@@ -33,10 +53,8 @@ export function TaskModal({
     api.getComments(task.id).then(setComments).catch(() => {});
   }, [task.id]);
 
-  const requiredParentType = REQUIRED_PARENT_TYPE[type];
-  const eligibleParents = requiredParentType
-    ? tasks.filter((t) => t.type === requiredParentType && t.id !== task.id)
-    : [];
+  const blockedParentIds = useMemo(() => descendantIds(task.id, tasks), [task.id, tasks]);
+  const eligibleParents = tasks.filter((t) => t.id !== task.id && !blockedParentIds.has(t.id));
   const children = tasks.filter((t) => t.parent_id === task.id);
 
   async function handleSave() {
@@ -81,13 +99,7 @@ export function TaskModal({
 
         <label>
           סוג
-          <select
-            value={type}
-            onChange={(e) => {
-              setType(e.target.value as TaskType);
-              setParentId("");
-            }}
-          >
+          <select value={type} onChange={(e) => setType(e.target.value as TaskType)}>
             {TASK_TYPES.map((t) => (
               <option key={t} value={t}>
                 {TYPE_LABELS[t]}
@@ -96,22 +108,20 @@ export function TaskModal({
           </select>
         </label>
 
-        {requiredParentType && (
-          <label>
-            {TYPE_LABELS[requiredParentType]}
-            <select
-              value={parentId}
-              onChange={(e) => setParentId(e.target.value ? Number(e.target.value) : "")}
-            >
-              <option value="">ללא (עצמאי)</option>
-              {eligibleParents.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+        <label>
+          כרטיס-על
+          <select
+            value={parentId}
+            onChange={(e) => setParentId(e.target.value ? Number(e.target.value) : "")}
+          >
+            <option value="">ללא (עצמאי)</option>
+            {eligibleParents.map((p) => (
+              <option key={p.id} value={p.id}>
+                {TYPE_LABELS[p.type]}: {p.title}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label>
           כותרת
@@ -148,7 +158,7 @@ export function TaskModal({
         {children.length > 0 && (
           <>
             <hr />
-            <h3>פריטים תחת זה</h3>
+            <h3>כרטיסים תחת זה</h3>
             <ul className="children-list">
               {children.map((child) => (
                 <li key={child.id}>
